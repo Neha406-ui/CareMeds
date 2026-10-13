@@ -1,4 +1,4 @@
-﻿from sqlalchemy import Column, String, DateTime, Boolean, Date, Text, ForeignKey, Integer, Enum
+from sqlalchemy import Column, String, DateTime, Boolean, Date, Text, ForeignKey, Integer, Enum, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -23,6 +23,7 @@ class Medicine(Base):
     strength = Column(String(100), nullable=True)
     form = Column(String(100), nullable=True)
     manufacturer = Column(String(255), nullable=True)
+    reorder_level = Column(Integer, nullable=False, default=0, server_default="0")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -39,6 +40,9 @@ class Prescription(Base):
     dosage = Column(String(100), nullable=False)
     route = Column(String(100), nullable=True)
     frequency = Column(String(100), nullable=False)
+    scheduled_times = Column(JSON, nullable=False, default=list, server_default="[]")
+    timezone = Column(String(64), nullable=False, default="UTC", server_default="UTC")
+    schedule_revision = Column(Integer, nullable=False, default=1, server_default="1")
     instructions = Column(Text, nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)

@@ -15,11 +15,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app.db.base import Base
+from app.db.base import Base, normalize_database_url
 target_metadata = Base.metadata
 
 def get_url():
-    return os.getenv("DATABASE_URL")
+    url = os.getenv("DATABASE_URL")
+    return normalize_database_url(url) if url else None
 
 def run_migrations_offline():
     url = get_url()
