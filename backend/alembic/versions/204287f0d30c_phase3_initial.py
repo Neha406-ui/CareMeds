@@ -1,8 +1,8 @@
 """phase3_initial
 
-Revision ID: 26c19111897e
+Revision ID: 204287f0d30c
 Revises: 
-Create Date: 2026-10-12 23:58:06.229128
+Create Date: 2026-10-14 11:01:33.318127
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '26c19111897e'
+revision: str = '204287f0d30c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,6 +26,7 @@ def upgrade() -> None:
     sa.Column('strength', sa.String(length=100), nullable=True),
     sa.Column('form', sa.String(length=100), nullable=True),
     sa.Column('manufacturer', sa.String(length=255), nullable=True),
+    sa.Column('reorder_level', sa.Integer(), server_default='0', nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -78,12 +79,17 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('resident_id', sa.UUID(), nullable=False),
     sa.Column('family_member_id', sa.UUID(), nullable=False),
-    sa.Column('consent_granted', sa.Boolean(), nullable=True),
+    sa.Column('consent_granted', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('can_view_profile', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('can_view_prescriptions', sa.Boolean(), server_default='false', nullable=False),
     sa.Column('consent_granted_at', sa.DateTime(), nullable=True),
+    sa.Column('consent_granted_by', sa.UUID(), nullable=True),
+    sa.Column('requested_at', sa.DateTime(), nullable=False),
     sa.Column('consent_revoked_at', sa.DateTime(), nullable=True),
     sa.Column('consent_revoked_by', sa.UUID(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('relationship_type', sa.String(length=100), nullable=True),
+    sa.ForeignKeyConstraint(['consent_granted_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['consent_revoked_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['family_member_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['resident_id'], ['residents.id'], ),
@@ -97,6 +103,9 @@ def upgrade() -> None:
     sa.Column('dosage', sa.String(length=100), nullable=False),
     sa.Column('route', sa.String(length=100), nullable=True),
     sa.Column('frequency', sa.String(length=100), nullable=False),
+    sa.Column('scheduled_times', sa.JSON(), server_default='[]', nullable=False),
+    sa.Column('timezone', sa.String(length=64), server_default='UTC', nullable=False),
+    sa.Column('schedule_revision', sa.Integer(), server_default='1', nullable=False),
     sa.Column('instructions', sa.Text(), nullable=True),
     sa.Column('start_date', sa.Date(), nullable=False),
     sa.Column('end_date', sa.Date(), nullable=True),

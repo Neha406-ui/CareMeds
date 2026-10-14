@@ -26,15 +26,10 @@ class User(Base):
     full_name = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True)
-    token_version = Column(Integer, default=0, nullable=False, server_default="0")
     last_login_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # relationships
     resident_profile = relationship("Resident", back_populates="user", uselist=False)
-    family_links = relationship(
-        "FamilyLink",
-        back_populates="family_member",
-        foreign_keys="FamilyLink.family_member_id",
-    )
+    family_links = relationship("FamilyLink", back_populates="family_member", foreign_keys="FamilyLink.family_member_id")
