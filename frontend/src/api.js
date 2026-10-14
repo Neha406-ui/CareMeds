@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export function getToken() { return localStorage.getItem('cm_token'); }
 export function setToken(token) { localStorage.setItem('cm_token', token); }
@@ -59,6 +59,12 @@ export async function logout() {
 }
 
 export function getMe() { return request('/auth/me'); }
+export async function register(username, password, fullName, phone) {
+  return request('/auth/register', {
+    method: 'POST',
+    body: { username, password, full_name: fullName || null, phone: phone || null, role: 'family_member' },
+  });
+}
 export function getHealth() { return request('/health'); }
 export function getDbHealth() { return request('/health/db'); }
 export function createUser(body) { return request('/auth/users', { method: 'POST', body }); }

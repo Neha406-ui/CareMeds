@@ -32,6 +32,7 @@ const icons = {
 export default function App() {
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [authView, setAuthView] = useState('login'); // 'login' | 'signup'
   const [page, setPage] = useState('dashboard');
   const [logoutError, setLogoutError] = useState('');
   const [authError, setAuthError] = useState('');
@@ -93,7 +94,10 @@ export default function App() {
   }, []);
 
   if (!authChecked) return <div className="loading-spinner" style={{ minHeight: '100vh' }}><div className="spinner" /></div>;
-  if (!user) return <LoginPage onLogin={handleLogin} message={logoutError || authError} />;
+  if (!user) {
+    if (authView === 'signup') return <SignUpPage onSuccess={() => setAuthView('login')} onLoginClick={() => setAuthView('login')} />;
+    return <LoginPage onLogin={handleLogin} message={logoutError || authError} onSignUpClick={() => setAuthView('signup')} />;
+  }
 
   const navigation = roleNavigation(user.role, familyAccess);
   const permittedPages = new Set([
@@ -130,7 +134,7 @@ export default function App() {
 /* ══════════════════════════════════════════════════════════════
    Login Page
    ══════════════════════════════════════════════════════════════ */
-function LoginPage({ onLogin, message = '' }) {
+function LoginPage({ onLogin, message = '', onSignUpClick }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -179,6 +183,118 @@ function LoginPage({ onLogin, message = '' }) {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+        <div style={{ marginTop: 20, textAlign: 'center', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+          New family member?{' '}
+          <button
+            id="goto-signup"
+            onClick={onSignUpClick}
+            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600, fontSize: 'inherit', padding: 0 }}
+          >
+            Create an account
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Sign Up Page
+   ══════════════════════════════════════════════════════════════ */
+function SignUpPage({ onSuccess, onLoginClick }) {
+  const [form, setForm] = useState({ username: '', password: '', confirm: '', fullName: '', phone: '' });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const upd = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (form.password !== form.confirm) { setError('Passwords do not match'); return; }
+    if (form.password.length < 12) { setError('Password must be at least 12 characters'); return; }
+    setLoading(true);
+    try {
+      await api.register(form.username, form.password, form.fullName, form.phone);
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="login-page">
+        <div className="login-card" style={{ textAlign: 'center' }}>
+          <div className="login-logo">
+            <div className="login-logo-icon">C</div>
+            <div><h1>CareMeds</h1><p>Medication Management</p></div>
+          </div>
+          <div style={{ fontSize: 48, margin: '16px 0' }}>✅</div>
+          <h2 className="login-title" style={{ color: 'var(--color-success)' }}>Account created!</h2>
+          <p className="login-subtitle" style={{ marginBottom: 24 }}>
+            Your family member account is ready. Sign in to get started.
+          </p>
+          <button id="goto-login-after-signup" className="btn btn-primary" style={{ width: '100%' }} onClick={onSuccess}>
+            Go to Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-logo">
+          <div className="login-logo-icon">C</div>
+          <div><h1>CareMeds</h1><p>Medication Management</p></div>
+        </div>
+        <h2 className="login-title">Create an account</h2>
+        <p className="login-subtitle">Family member self-registration</p>
+        {error && <div className="login-alert">{error}</div>}
+        <form onSubmit={submit}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="signup-name">Full Name</label>
+            <input id="signup-name" className="form-input" value={form.fullName} onChange={e => upd('fullName', e.target.value)} placeholder="e.g. Jane Smith" autoFocus />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="signup-user">Username *</label>
+            <input id="signup-user" className="form-input" value={form.username} onChange={e => upd('username', e.target.value)} placeholder="Choose a username" required />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="signup-phone">Phone (optional)</label>
+            <input id="signup-phone" className="form-input" value={form.phone} onChange={e => upd('phone', e.target.value)} placeholder="e.g. +91-9876543210" />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="signup-pass">Password *</label>
+            <input id="signup-pass" className="form-input" type="password" value={form.password} onChange={e => upd('password', e.target.value)} placeholder="Min 12 characters" required />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="signup-confirm">Confirm Password *</label>
+            <input id="signup-confirm" className="form-input" type="password" value={form.confirm} onChange={e => upd('confirm', e.target.value)} placeholder="Repeat your password" required />
+          </div>
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: 8, lineHeight: 1.5 }}>
+            📋 Family Member accounts can view linked resident profiles and prescriptions once consent is granted by the resident.
+          </div>
+          <button id="signup-submit" className="btn btn-primary" style={{ width: '100%', marginTop: 4 }} disabled={loading}>
+            {loading ? 'Creating account…' : 'Create Account'}
+          </button>
+        </form>
+        <div style={{ marginTop: 20, textAlign: 'center', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+          Already have an account?{' '}
+          <button
+            id="goto-login"
+            onClick={onLoginClick}
+            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 600, fontSize: 'inherit', padding: 0 }}
+          >
+            Sign In
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -345,11 +461,11 @@ function DashboardPage({ user, setPage }) {
       setLoading(true);
       try {
         const [residents, medicines, prescriptions, health] = await Promise.all([
-        api.getResidents(),
-        api.getMedicines(),
-        api.getPrescriptions(),
-        api.getHealth(),
-      ]);
+          api.getResidents(),
+          api.getMedicines(),
+          api.getPrescriptions(),
+          api.getHealth(),
+        ]);
         if (!cancelled) {
           setStats({ residents, medicines, prescriptions, health });
           setError('');
