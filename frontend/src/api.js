@@ -1,5 +1,7 @@
-const RAW_BASE = (import.meta.env.VITE_API_URL || '').trim().replace(/\]$/, '');
-const BASE = RAW_BASE.replace(/\/+$/, '') || 'http://localhost:8000/api';
+// Strip stray chars, trailing slashes, then guarantee /api suffix
+const _raw = (import.meta.env.VITE_API_URL || '').trim().replace(/[\]>]+$/, '');
+const _clean = _raw.replace(/\/+$/, '') || 'http://localhost:8000';
+const BASE = _clean.endsWith('/api') ? _clean : _clean + '/api';
 
 export function getToken() { return localStorage.getItem('cm_token'); }
 export function setToken(token) { localStorage.setItem('cm_token', token); }
